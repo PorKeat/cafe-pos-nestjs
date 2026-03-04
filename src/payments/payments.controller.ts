@@ -1,11 +1,7 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
-import {
-  InitiateBakongPaymentDto,
-  ConfirmBakongPaymentDto,
-  CashPaymentDto,
-} from './dto/ bakong.dto';
+import { ConfirmBakongPaymentDto, CashPaymentDto } from './dto/bakong.dto';
 import { JwtAuthGuard } from '../auth/roles.guard';
 
 @ApiTags('Payments')
@@ -15,20 +11,20 @@ import { JwtAuthGuard } from '../auth/roles.guard';
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Post('bakong/initiate')
-  @ApiOperation({ summary: 'Generate a Bakong KHQR code for an order' })
-  initiateBakong(@Body() dto: InitiateBakongPaymentDto) {
-    return this.paymentsService.initiateBakong(dto);
+  @Post('qr/initiate/:orderId')      // ← just pass orderId in URL, no body needed
+  @ApiOperation({ summary: 'Get static Bakong QR for order' })
+  initiateQr(@Param('orderId') orderId: string) {
+    return this.paymentsService.initiateQrPayment(orderId);
   }
 
-  @Post('bakong/confirm')
-  @ApiOperation({ summary: 'Confirm a Bakong payment after QR scan' })
-  confirmBakong(@Body() dto: ConfirmBakongPaymentDto) {
-    return this.paymentsService.confirmBakong(dto);
+  @Post('qr/confirm')                // ← cashier confirms after seeing transfer in app
+  @ApiOperation({ summary: 'Manually confirm Bakong payment' })
+  confirmPayment(@Body() dto: ConfirmBakongPaymentDto) {
+    return this.paymentsService.confirmPayment(dto);
   }
 
   @Post('cash')
-  @ApiOperation({ summary: 'Process a cash payment and return change' })
+  @ApiOperation({ summary: 'Process cash payment and return change' })
   processCash(@Body() dto: CashPaymentDto) {
     return this.paymentsService.processCash(dto);
   }
